@@ -1,3 +1,5 @@
+import sys
+
 from init_bot import bot
 
 import dbfuncs
@@ -5,6 +7,7 @@ import threading
 import audio_funcs
 import image_funcs
 import logging
+import time
 from _config import log_c_format, log_f_format, log_file_name
 
 logger = logging.getLogger(__name__)
@@ -153,4 +156,16 @@ def get_text_messages(message):
 if __name__ == "__main__":
     dbfuncs.check_database_and_create()
     logger.info("Start bot")
-    bot.polling(none_stop=True, interval=0)
+    while True:
+        try:
+            # bot.polling(none_stop=True, interval=0)
+            bot.infinity_polling(True)
+
+        except KeyboardInterrupt as e:
+            logger.warning("KeyboardInterrupt. Stop bot")
+            sys.exit(0)
+        except Exception as e:
+            logger.error("ERROR while polling: " + str(e))
+            time.sleep(5)
+
+
