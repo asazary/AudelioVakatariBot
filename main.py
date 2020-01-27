@@ -8,7 +8,7 @@ import audio_funcs
 import image_funcs
 import logging
 import time
-from _config import log_c_format, log_f_format, log_file_name
+from _config import log_c_format, log_f_format, log_file_name, _admin_username
 
 logger = logging.getLogger(__name__)
 c_handler = logging.StreamHandler()
@@ -23,6 +23,10 @@ f_handler.setFormatter(f_format)
 logger.addHandler(c_handler)
 logger.addHandler(f_handler)
 logger.setLevel(logging.INFO)
+
+
+class ExitCommand(Exception):
+    pass
 
 
 @bot.message_handler(commands=["start", "help"])
@@ -143,6 +147,13 @@ def handle_document(message):
         bot.send_message(message.from_user.id, "Не знаю, что с этим делать.")
 
 
+@bot.message_handler(commands=["stop"])
+def stop_command(message):
+    if message.from_user.username == _admin_username:
+        logger.info("Stopping bot...")
+        raise ExitCommand()
+
+
 @bot.message_handler(content_types=["text"])
 def get_text_messages(message):
     logger.info(f"{message.from_user.id} ({message.from_user.username}) - handle: text ({message.text})")
@@ -158,11 +169,14 @@ if __name__ == "__main__":
     logger.info("Start bot")
     while True:
         try:
-            # bot.polling(none_stop=True, interval=0)
-            bot.infinity_polling(True)
+            logger.info("Start polling.")
+            bot.polling(none_stop=True, interval=0)
+            # bot.infinity_polling(True)
 
         except KeyboardInterrupt as e:
             logger.warning("KeyboardInterrupt. Stop bot")
+            sys.exit(0)
+        except ExitCommand:
             sys.exit(0)
         except Exception as e:
             logger.error("ERROR while polling: " + str(e))
